@@ -36,7 +36,7 @@ def rsfe(E, j, m):
     return max(epsi) 
 
 
-def samc(lambdaStar, l, X1, X2, alpha=0.2, m=101):
+def samc(lambdaStar, l, X1, X2, alpha=0.2, m=101, T = 200000, J= 5*10**6):
     theta = np.zeros(m)
     E = np.zeros(m)
     pi = np.array([1/m]*m)
@@ -46,7 +46,6 @@ def samc(lambdaStar, l, X1, X2, alpha=0.2, m=101):
     lambdaX = mh.lambda_sum_diff_abs(X1new, X2new)
     Ebound = bounds(m, lambdaStar)
     kX = Ebound.query('@lambdaX >= lower and @lambdaX < upper').index
-    J=5*10**6
     
     for j in tqdm(range(J)):
         Y1, Y2 = mh.propose(X1new, X2new, l)
@@ -65,10 +64,10 @@ def samc(lambdaStar, l, X1, X2, alpha=0.2, m=101):
         #weight update
         theta -= gamma(j)*pi
         theta[kX] += gamma(j)*pi[kX]
-        if j % 100 == 0 and j>=200000:
+        if j % 100 == 0 and j>=T:
             if rsfe(E, j, m) < alpha: #stopping rule
                 break
-    return pvalue_calc(theta, E, m, pi), j
+    return pvalue_calc(theta, E, m, pi), j+1
 
 
 

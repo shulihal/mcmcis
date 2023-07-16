@@ -6,13 +6,13 @@ import mh
 
 def g_func(x, beta, xzero): # trial function
     if x >= xzero:
-        return 0.5
+        return 1
     else:
-        return 0.5*np.exp(beta*(x-xzero))
+        return np.exp(beta*(x-xzero))
     # return 1 / (1 + np.exp( -beta*(x - xzero)))
 
 
-def mcmcis(lambdaStar, l, X1, X2, alpha, K=10**5, J=10**2, Ti=10**4):
+def mcmcis(lambdaStar, l, X1, X2, alpha=0, K=10**5, J=10**2, Ti=10**4):
     a=15
     beta=0.5
     gam = 0.1
@@ -62,7 +62,7 @@ def mcmcis(lambdaStar, l, X1, X2, alpha, K=10**5, J=10**2, Ti=10**4):
         pi = (theta11[j,:]!=0).sum()/ K
         beta += gam*(0.5-pi)
 
-    return (theta11.sum()/theta10.sum()), (j+1)*K
+    return (theta11.sum()/theta10.sum()), j+1 , (j+1)*(K+Ti)
 
 
 

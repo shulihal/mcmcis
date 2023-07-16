@@ -25,15 +25,17 @@ def create_table():
         """)
         connection.commit()
 
-def insert_result(algo, example_id, alpha, runtime, true_val, result, iter, note):
+def insert_result(algo, example_id, runtime, true_val, result, iterations, alpha=None, note=None, IS_func=None, T=None, K=None, J=None, m=None):
+    if alpha ==None or alpha<=0:
+        stop='fixed'
+    else:
+        stop='rule'        
     with sqlite3.connect("experiment_results.db") as connection:
         cursor = connection.cursor()
         cursor.execute("""
-        INSERT INTO results (algo, example_id, alpha, runtime, true_val, result, iterations, notes)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """, (algo, example_id, alpha, runtime, true_val, result, iter, note))
+        INSERT INTO results (algo, example_id, alpha, runtime, true_val, result, iterations, notes, IS_func, T, K, J, m, stop)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (algo, example_id, alpha, runtime, true_val, result, iterations, note, IS_func, T, K, J, m, stop))
         connection.commit()
 
-# Create the table (if not exists)
 create_table()
-
