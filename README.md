@@ -4,7 +4,12 @@
 An efficient algorithm for estimating tail in unknown distribution, using Markov Chain Monte Carlo and Importance Sampling techniques.
 Compared to the SAMC algorithm and different IS functions.
 
-For running via teminal run: 'python3 main.py ALGORITHM EXAMPLE_ID ALPHA ITERATIONS NOTES'
+To run the algorithm use terminal:
+python3 main.py --algo['samc', 'mcmcis'] --exm_id [0,1,2,3] --T 1000000 --K 10000000 --beta 0.1 --n_runs 7 --notes '' &
+
+examples are in 'data.txt'
+results are in both: results.csv 
+and in experiment_results.db in 'results' table.
 
 ## General Idea
 
