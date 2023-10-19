@@ -1,7 +1,7 @@
 import sqlite3
 
 def create_table():
-    with sqlite3.connect("experiment_results.db") as connection:
+    with sqlite3.connect("data/experiment_results.db") as connection:
         cursor = connection.cursor()
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS results (
@@ -30,7 +30,7 @@ def insert_result(algo, example_id, true_val, result,
                   beta, adaptive, IS_func,
                   accept_rate, up_rate, runtime, iterations, 
                   T, K, J, notes=None):     
-    with sqlite3.connect("experiment_results.db") as connection:
+    with sqlite3.connect("data/experiment_results.db") as connection:
         cursor = connection.cursor()
         cursor.execute("""
         INSERT INTO results (algo, example_id, true_val, result, 

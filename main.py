@@ -13,8 +13,8 @@ from samc import samc
 
 
 def execute(arguments):
-    X1 = np.loadtxt('data.txt', dtype='int')[2 * arguments.exm_id]
-    X2 = np.loadtxt('data.txt', dtype='int')[2 * arguments.exm_id + 1]
+    X1 = np.loadtxt('data/data.txt', dtype='int')[2 * arguments.exm_id]
+    X2 = np.loadtxt('data/data.txt', dtype='int')[2 * arguments.exm_id + 1]
 
     true_val = mh.perm_exact_pval_diff(X1, X2)
     lambdaStar = abs(mh.sum_diff(X1, X2))
@@ -76,15 +76,15 @@ def main():
     with multiprocessing.Pool(processes=arguments.num_processes) as pool:
         results_list = pool.map(execute, [arguments] * arguments.num_processes)
 
-    if os.path.exists('results.csv'):
-        main_results = pd.read_csv('results.csv', on_bad_lines='skip')
+    if os.path.exists('data/results.csv'):
+        main_results = pd.read_csv('data/results.csv', on_bad_lines='skip')
     else:
         main_results = pd.DataFrame()
 
     for res in results_list:
         main_results = pd.concat([main_results, res])
 
-    main_results.to_csv('results.csv', index=False)
+    main_results.to_csv('data/results.csv', index=False)
 
 
 if __name__ == '__main__':
