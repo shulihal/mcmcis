@@ -17,26 +17,25 @@ def perm_exact_pval_diff(X,Y):
             rtab[i, XY[i]:sl+1, 1:min(nl,i+1)+1] = rtab[i-1,0:sl-XY[i]+1,0:min(nl-1,i)+1]
         rtab[i,:,:] = rtab[i,:,:] + rtab[i-1, :, :]
 
-    return sum(rtab[N-1,:,nl])/math.comb(N,nl)
+    return 2*sum(rtab[N-1,:,nl])/math.comb(N,nl)
 
 
 ## test statistic (lambda).
-def lambda_sum_diff_abs(x, y): 
-    return abs(sum(y)-sum(x))
+def sum_diff(x, y): 
+    return y.sum() - x.sum()
 
 
-def propose(x, y, l): #q(x,*)
-    nx = len(x)
-    ny = len(y)
+def propose(X, Y, L):
+    x = X.copy()
+    y = Y.copy()
 
-    for _ in range(l):
-        repx = np.random.randint(0,nx,1)
-        valx = x[repx]
+    repx = np.random.choice(len(x), L, replace=False)
+    repy = np.random.choice(len(y), L, replace=False)
+    valx = x[repx]
+    valy = y[repy]
 
-        repy = np.random.randint(0,ny,1)
-        valy = y[repy]
+    x[repx], y[repy] = valy, valx
+    d = valx.sum() - valy.sum()
 
-        x[repx] = valy
-        y[repy] = valx
+    return x, y, d
 
-    return x,y
