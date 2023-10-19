@@ -15,7 +15,6 @@ def bounds(m, lambdaStar, lambda0=0):
     upper[-1] = np.inf
     return lower, upper
 
-
 def samc(lambdaStar, L, X1, X2, m=101, T=2e5, K=5e6, alpha=0.2):
     pi = 1 / m
     lower_bound, upper_bound = bounds(m, lambdaStar)

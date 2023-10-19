@@ -5,13 +5,9 @@ import mh
 
 
 def g_func(xzero, beta, x): # trial function
-    if x >= xzero:
-        return 1.0
-    else:
-        return np.exp(beta*(x-xzero))
+    return 1.0 if x >= xzero else np.exp(beta * (x - xzero))
     # return 2 / (1 + np.exp( -beta*(x - xzero)))
     # return (x/xzero)**(beta)
-
 
 
 def mcmcis(lambdaStar, L, X1, X2, 
