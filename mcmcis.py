@@ -4,28 +4,29 @@ from tqdm.auto import tqdm
 import mh
 
 
-def g_func(x, beta, xzero): # trial function
-    if x >= xzero:
-        return 1
-    else:
-        return np.exp(beta*(x-xzero))
-    # return 1 / (1 + np.exp( -beta*(x - xzero)))
+def g_func(xzero, beta, x): # trial function
+    return 1.0 if x >= xzero else np.exp(beta * (x - xzero))
+    # return 2 / (1 + np.exp( -beta*(x - xzero)))
+    # return (x/xzero)**(beta)
 
 
-def mcmcis(lambdaStar, l, X1, X2, alpha=0, K=10**5, J=10**2, Ti=10**4):
-    a=15
-    beta=0.5
+def mcmcis(lambdaStar, L, X1, X2, 
+           beta=0, adaptive=False,
+           K=10**5, J=10**2, Ti=10**4):
+    accept = 0
     gam = 0.1
-    X1new = X1
-    X2new = X2
-    lambdaX = mh.lambda_sum_diff_abs(X1new, X2new)
-    gX = g_func(x=lambdaX, beta =beta, xzero=lambdaStar)
+    X1new = X1.copy()
+    X2new = X2.copy()
+    sum_diff_x = mh.sum_diff(X1new, X2new)
+    lambdaX = abs(sum_diff_x)
+    gX = g_func(xzero= lambdaStar, beta =beta, x=lambdaX)
     theta10 = np.zeros(shape=[J,K])
     theta11 = np.zeros(shape=[J,K])
     for j in tqdm(range(J)):
-        for t in range(Ti): #burnin
-            Y1, Y2 = mh.propose(X1new, X2new, l)
-            lambdaY = mh.lambda_sum_diff_abs(Y1, Y2)
+        for _ in range(Ti): #burnin
+            Y1, Y2, d = mh.propose(X1new, X2new, L)
+            sum_diff_y = sum_diff_x + 2*d
+            lambdaY = abs(sum_diff_y)
             gY = g_func(xzero= lambdaStar, beta =beta, x=lambdaY)
 
             p = gY/gX
@@ -33,11 +34,14 @@ def mcmcis(lambdaStar, l, X1, X2, alpha=0, K=10**5, J=10**2, Ti=10**4):
             if q<p:   #accept
                 X1new = Y1.copy()
                 X2new = Y2.copy()
+                sum_diff_x = sum_diff_y.copy()
                 gX = gY
+                accept += 1
 
         for k in range(K):
-            Y1, Y2 = mh.propose(X1new, X2new, l)
-            lambdaY = mh.lambda_sum_diff_abs(Y1, Y2)
+            Y1, Y2, d = mh.propose(X1new, X2new, L)
+            sum_diff_y = sum_diff_x + 2*d
+            lambdaY = abs(sum_diff_y)
             gY = g_func(xzero= lambdaStar, beta =beta, x=lambdaY)
 
             p = gY/gX
@@ -46,25 +50,21 @@ def mcmcis(lambdaStar, l, X1, X2, alpha=0, K=10**5, J=10**2, Ti=10**4):
                 X1new = Y1.copy()
                 X2new = Y2.copy()
                 gX = gY
-                lambdaX = lambdaY
+                lambdaX = lambdaY.copy()
+                sum_diff_x = sum_diff_y.copy()
+                accept += 1
 
             #weight update
             theta10[j,k] = 1/gX
             if lambdaX >= lambdaStar:
                 theta11[j,k] = 1/gX
 
-        if j>=a and j%10==0:
-            pvals = (theta11[:j+1,:].sum(axis=1).cumsum()/theta10[:j+1,:].sum(axis=1).cumsum())
-            if pvals[j-a:].std() < pvals[-1]*alpha:
-                break
-
         #parameter beta update
-        pi = (theta11[j,:]!=0).sum()/ K
-        beta += gam*(0.5-pi)
-
-    return (theta11.sum()/theta10.sum()), j+1 , (j+1)*(K+Ti)
-
-
-
-
-
+        if adaptive:
+            pi = (theta11[j,:]!=0).sum()/ K
+            beta += gam*(0.5-pi)
+    res = (theta11.sum()/theta10.sum())
+    iter = (j+1)*(K+Ti)
+    accept_rate = accept / iter
+    up_rate = (theta11!=0).sum()/ K*J
+    return res, j+1, beta, accept_rate, up_rate

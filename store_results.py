@@ -8,34 +8,43 @@ def create_table():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             algo TEXT,
             example_id INTEGER,
-            alpha REAL,
-            runtime INTEGER,
             true_val REAL,
             result REAL,
+            beta REAL,
+            adaptive BOOL,
+            IS_func TEXT,
+            accept_rate REAL,
+            up_rate REAL,
+            runtime INTEGER,
             iterations INTEGER,
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-            notes TEXT,
-            IS_func TEXT,
             T INTEGER,
             K INTEGER,
             J INTEGER,
-            m INTEGER,
-            stop TEXT
+            notes TEXT
         )
         """)
         connection.commit()
 
-def insert_result(algo, example_id, runtime, true_val, result, iterations, alpha=None, note=None, IS_func=None, T=None, K=None, J=None, m=None):
-    if alpha ==None or alpha<=0:
-        stop='fixed'
-    else:
-        stop='rule'        
+def insert_result(algo, example_id, true_val, result, 
+                  beta, adaptive, IS_func,
+                  accept_rate, up_rate, runtime, iterations, 
+                  T, K, J, notes=None):     
     with sqlite3.connect("experiment_results.db") as connection:
         cursor = connection.cursor()
         cursor.execute("""
-        INSERT INTO results (algo, example_id, alpha, runtime, true_val, result, iterations, notes, IS_func, T, K, J, m, stop)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (algo, example_id, alpha, runtime, true_val, result, iterations, note, IS_func, T, K, J, m, stop))
+        INSERT INTO results (algo, example_id, true_val, result, 
+                  beta, adaptive, IS_func,
+                  accept_rate, up_rate, runtime, iterations, 
+                  T, K, J, notes)
+        VALUES (?, ?, ?, ?,
+                ?, ?, ?,
+                ?, ?, ?, ?,
+                ?, ?, ?, ?)
+        """,(algo, example_id, true_val, result, 
+                  beta, adaptive, IS_func,
+                  accept_rate, up_rate, runtime, iterations, 
+                  T, K, J, notes))
         connection.commit()
 
 create_table()
