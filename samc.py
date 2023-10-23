@@ -15,7 +15,28 @@ def bounds(m, lambdaStar, lambda0=0):
     upper[-1] = np.inf
     return lower, upper
 
-def samc(lambdaStar, L, X1, X2, m=101, T=2e5, K=5e6, alpha=0.2):
+
+def mcmc_step(X1, X2, L, sum_diff_x, lower_bound, upper_bound, theta, i, pi, w_update, kX):
+    Y1, Y2, d = mh.propose(X1, X2, L)
+    sum_diff_y = sum_diff_x + 2 * d
+    lambdaY = abs(sum_diff_y)
+    kY = np.where((lambdaY >= lower_bound) & (lambdaY < upper_bound))[0][0]
+    r = np.exp(theta[kX] - theta[kY])
+    acc = 0
+    if np.random.rand() < r:
+        X1, X2 = Y1.copy(), Y2.copy()
+        kX, sum_diff_x = kY, sum_diff_y
+        acc = 1
+
+    theta -= gamma(i) * pi
+    if w_update == '0':
+        theta[kX] += gamma(i) * pi
+    else:
+        theta[kX] += gamma(i)
+
+    return X1, X2, kX, sum_diff_x, theta, acc
+
+def samc(lambdaStar, L, X1, X2, m=101, w_update = '0', T=2e5, K=5e6):
     pi = 1 / m
     lower_bound, upper_bound = bounds(m, lambdaStar)
 
@@ -25,38 +46,18 @@ def samc(lambdaStar, L, X1, X2, m=101, T=2e5, K=5e6, alpha=0.2):
     theta = np.zeros(m)
 
     for t in range(T):
-        Y1, Y2, d = mh.propose(X1, X2, L)
-        sum_diff_y = sum_diff_x + 2 * d
-        lambdaY = abs(sum_diff_y)
-        kY = np.where((lambdaY >= lower_bound) & (lambdaY < upper_bound))[0][0]
-        r = np.exp(theta[kX] - theta[kY])
-        if np.random.rand() < r:
-            X1, X2 = Y1.copy(), Y2.copy()
-            kX, sum_diff_x = kY, sum_diff_y
-
-        theta -= gamma(t) * pi
-        theta[kX] += gamma(t) * pi
+        X1, X2, kX, sum_diff_x, theta, acc = mcmc_step(X1, X2, L, sum_diff_x, lower_bound, upper_bound, theta, t, pi, w_update, kX)
 
     theta.fill(0)
     upper = 0
     accept = 0
 
-    for j in tqdm(range(int(K))):
-        Y1, Y2, d = mh.propose(X1, X2, L)
-        sum_diff_y = sum_diff_x + 2 * d
-        lambdaY = abs(sum_diff_y)
-        kY = np.where((lambdaY >= lower_bound) & (lambdaY < upper_bound))[0][0]
-        r = np.exp(theta[kX] - theta[kY])
-        if np.random.rand() < r:
-            X1, X2 = Y1.copy(), Y2.copy()
-            kX, sum_diff_x = kY, sum_diff_y
-            accept += 1
-
+    for k in tqdm(range(int(K))):
+        X1, X2, kX, sum_diff_x, theta, acc = mcmc_step(X1, X2, L, sum_diff_x, lower_bound, upper_bound, theta, k, pi, w_update, kX)
+        accept += acc
         upper += kX == m-1
-        theta -= gamma(j) * pi
-        theta[kX] += gamma(j) * pi
     
     pval = 1 / (np.sum(np.exp(theta - theta[-1])))
     accept_rate = accept / K
     uprate = upper / K
-    return pval, K, m, accept_rate, uprate
+    return pval, K, accept_rate, uprate
