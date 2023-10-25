@@ -3,7 +3,7 @@ from tqdm.auto import tqdm
 
 import mh
 
-def gamma(t, t0=1e5):
+def gamma(t, t0=1e4):
     return t0 / max(t0, t)
 
 def lambdak(k, m, lambdaStar, lambda0=0):
@@ -16,7 +16,7 @@ def bounds(m, lambdaStar, lambda0=0):
     return lower, upper
 
 
-def mcmc_step(X1, X2, L, sum_diff_x, lower_bound, upper_bound, theta, i, pi, w_update, kX):
+def mcmc_step(X1, X2, L, sum_diff_x, lower_bound, upper_bound, theta, i, pi, w_update, kX, t0):
     Y1, Y2, d = mh.propose(X1, X2, L)
     sum_diff_y = sum_diff_x + 2 * d
     lambdaY = abs(sum_diff_y)
@@ -28,15 +28,15 @@ def mcmc_step(X1, X2, L, sum_diff_x, lower_bound, upper_bound, theta, i, pi, w_u
         kX, sum_diff_x = kY, sum_diff_y
         acc = 1
 
-    theta -= gamma(i) * pi
+    theta -= gamma(i, t0) * pi
     if w_update == '0':
-        theta[kX] += gamma(i) * pi
+        theta[kX] += gamma(i, t0) * pi
     else:
-        theta[kX] += gamma(i)
+        theta[kX] += gamma(i, t0)
 
     return X1, X2, kX, sum_diff_x, theta, acc
 
-def samc(lambdaStar, L, X1, X2, m=101, w_update = '0', T=2e5, K=5e6):
+def samc(lambdaStar, L, X1, X2, m=101, w_update = '0', T=2e5, K=5e6, t0=1e4):
     pi = 1 / m
     lower_bound, upper_bound = bounds(m, lambdaStar)
 
@@ -46,14 +46,14 @@ def samc(lambdaStar, L, X1, X2, m=101, w_update = '0', T=2e5, K=5e6):
     theta = np.zeros(m)
 
     for t in range(T):
-        X1, X2, kX, sum_diff_x, theta, acc = mcmc_step(X1, X2, L, sum_diff_x, lower_bound, upper_bound, theta, t, pi, w_update, kX)
+        X1, X2, kX, sum_diff_x, theta, acc = mcmc_step(X1, X2, L, sum_diff_x, lower_bound, upper_bound, theta, t, pi, w_update, kX, t0)
 
     theta.fill(0)
     upper = 0
     accept = 0
 
     for k in tqdm(range(int(K))):
-        X1, X2, kX, sum_diff_x, theta, acc = mcmc_step(X1, X2, L, sum_diff_x, lower_bound, upper_bound, theta, k, pi, w_update, kX)
+        X1, X2, kX, sum_diff_x, theta, acc = mcmc_step(X1, X2, L, sum_diff_x, lower_bound, upper_bound, theta, k, pi, w_update, kX, t0)
         accept += acc
         upper += kX == m-1
     
