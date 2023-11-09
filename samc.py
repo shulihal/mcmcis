@@ -36,7 +36,7 @@ def mcmc_step(X1, X2, L, sum_diff_x, lower_bound, upper_bound, theta, i, pi, w_u
 
     return X1, X2, kX, sum_diff_x, theta, acc
 
-def samc(lambdaStar, L, X1, X2, m=101, w_update = '0', T=2e5, K=5e6, t0=1e4):
+def samc(lambdaStar, L, X1, X2, m=101, w_update = 'base', T=2e5, K=5e6, t0=1e4):
     pi = 1 / m
     lower_bound, upper_bound = bounds(m, lambdaStar)
 

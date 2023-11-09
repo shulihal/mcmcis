@@ -28,11 +28,15 @@ def execute(arguments):
     for _ in range(arguments.n_runs // arguments.num_processes):
         start_time = time()
         if arguments.algo == 'samc':
+            if arguments.w_func is not None:
+                w_update = arguments.w_func
+            else:
+                w_update = 'base'
             m = int(arguments.beta)
             res, j, accrate, up_rate = samc(lambdaStar, L, X1, X2,
-                                                    m, arguments.w_func,
+                                                    m, w_update,
                                                     arguments.T, arguments.K, arguments.gamma)
-            is_func, iterations, beta = arguments.w_func,  arguments.K+ arguments.T, m
+            is_func, iterations, beta = w_update,  arguments.K+ arguments.T, m
         else:
             res, j, beta, accrate, up_rate = mcmcis(lambdaStar, L, X1, X2,
                                                     arguments.beta, arguments.adaptive,
