@@ -21,7 +21,7 @@ def execute(arguments):
     L = 5
 
     results = pd.DataFrame(columns=['algo', 'example_id', 'true_val', 'result',
-                                    'beta', 'gamma', 'adaptive', 'IS_func',
+                                    'beta', 'gamma', 'adaptive', 'pi', 'fraction', 'IS_func',
                                     'accept_rate', 'up_rate', 'runtime', 'iterations',
                                     'T', 'K', 'J', 'notes'])
 
@@ -39,19 +39,19 @@ def execute(arguments):
             is_func, iterations, beta = w_update,  arguments.K+ arguments.T, m
         else:
             res, j, beta, accrate, up_rate = mcmcis(lambdaStar, L, X1, X2,
-                                                    arguments.beta, arguments.adaptive,
+                                                    arguments.beta, arguments.adaptive, arguments.pi, arguments.frac,
                                                     arguments.K, arguments.J, arguments.T)
             is_func, iterations = 'exp', j*(arguments.K+arguments.T)
         end_time = time()
         runtime = end_time - start_time
 
         store_results.insert_result(arguments.algo, arguments.exm_id, true_val, res,
-                                    beta, arguments.gamma, arguments.adaptive, is_func,
+                                    beta, arguments.gamma, arguments.adaptive, arguments.pi, arguments.frac, is_func, 
                                     accrate, up_rate, runtime, iterations,
                                     arguments.T, arguments.K, arguments.J, notes=arguments.notes)
 
         results.loc[results.shape[0]] = [arguments.algo, arguments.exm_id, true_val, res,
-                                         beta, arguments.gamma, arguments.adaptive, is_func,
+                                         beta, arguments.gamma, arguments.adaptive, arguments.pi, arguments.frac, is_func,
                                          accrate, up_rate, runtime, iterations,
                                          arguments.T, arguments.K, arguments.J, arguments.notes]
 
@@ -68,7 +68,9 @@ def main():
     parser.add_argument('--beta', type=float, required=True, help='Beta value.')
     parser.add_argument('--gamma', type=float, required=False, default=None, help='t0 for gamma value.')
     parser.add_argument('--w_func', type=str, required=False, help='IS func for mcmcis, weight update for SAMC')
-    parser.add_argument('--adaptive', choices=[True, False], required=False, default=False, help='Adaptive parameter.')
+    parser.add_argument('--adaptive', type=bool, required=False, default=False, help='Adaptive parameter.')
+    parser.add_argument('--pi', type=float, required=False, default=None, help='tail')
+    parser.add_argument('--frac', type=float, required=False,default=1, help='sampling fraction')
     parser.add_argument('--n_runs', type=int, required=True, help='Number of runs.')
     parser.add_argument('--num_processes', type=int,default=multiprocessing.cpu_count(), help='Number of processes to run in parallel.')
     parser.add_argument('--notes', nargs='?', required=False, default=None, help='Additional notes.')

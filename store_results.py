@@ -13,6 +13,8 @@ def create_table():
             beta REAL,
             gamma INTEGER,
             adaptive BOOL,
+            pi REAL,
+            fraction REAL,
             IS_func TEXT,
             accept_rate REAL,
             up_rate REAL,
@@ -28,22 +30,22 @@ def create_table():
         connection.commit()
 
 def insert_result(algo, example_id, true_val, result, 
-                  beta, gamma, adaptive, IS_func,
+                  beta, gamma, adaptive, pi, frac, IS_func,
                   accept_rate, up_rate, runtime, iterations, 
                   T, K, J, notes=None):     
     with sqlite3.connect("data/experiment_results.db") as connection:
         cursor = connection.cursor()
         cursor.execute("""
         INSERT INTO results (algo, example_id, true_val, result, 
-                  beta, gamma, adaptive, IS_func,
+                  beta, gamma, adaptive, pi, fraction, IS_func,
                   accept_rate, up_rate, runtime, iterations, 
                   T, K, J, notes)
         VALUES (?, ?, ?, ?,
-                ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?,
                 ?, ?, ?, ?,
                 ?, ?, ?, ?)
         """,(algo, example_id, true_val, result, 
-                  beta, gamma, adaptive, IS_func,
+                  beta, gamma, adaptive, pi, frac, IS_func,
                   accept_rate, up_rate, runtime, iterations, 
                   T, K, J, notes))
         connection.commit()
