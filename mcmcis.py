@@ -3,6 +3,8 @@ from tqdm.auto import tqdm
 
 import mh
 
+def gamma(t, t0=1):
+    return t0 / max(t0, t)
 
 def g_func(xzero, beta, x): # trial function
     return 1.0 if x >= xzero else np.exp(beta * (x - xzero))
@@ -11,10 +13,9 @@ def g_func(xzero, beta, x): # trial function
 
 
 def mcmcis(lambdaStar, L, X1, X2, 
-           beta=0, adaptive=False,
+           beta=0, adaptive=False, pi=0.5, frac = 1,
            K=10**5, J=10**2, Ti=10**4):
     accept = 0
-    gam = 0.1
     X1new = X1.copy()
     X2new = X2.copy()
     sum_diff_x = mh.sum_diff(X1new, X2new)
@@ -61,9 +62,16 @@ def mcmcis(lambdaStar, L, X1, X2,
 
         #parameter beta update
         if adaptive:
-            pi = (theta11[j,:]!=0).sum()/ K
-            beta += gam*(0.5-pi)
-    res = (theta11.sum()/theta10.sum())
+            pi_hat = (theta11[j,:]!=0).sum()/ K
+            beta += gamma(j+1)*(pi-pi_hat)
+    
+    theta0 = 0
+    theta1 = 0
+    for row in range(J):
+        sampled_indices = np.random.choice(K, size=int(K*frac), replace=False)
+        theta0  += theta10[row,sampled_indices].sum()
+        theta1  += theta11[row,sampled_indices].sum()
+    res = (theta1/theta0)
     iter = (j+1)*(K+Ti)
     accept_rate = accept / iter
     up_rate = (theta11!=0).sum()/ K*J
