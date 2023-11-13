@@ -1,6 +1,6 @@
 .DS_Store
-results.csv
-experiment_results.db
+data/results.csv
+data/experiment_results.db
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

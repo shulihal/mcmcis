@@ -28,7 +28,7 @@ def execute(arguments):
     for _ in range(arguments.n_runs // arguments.num_processes):
         start_time = time()
         if arguments.algo == 'samc':
-            if arguments.w_func is not None:
+            if arguments.w_func != 'exp':
                 w_update = arguments.w_func
             else:
                 w_update = 'base'
@@ -38,10 +38,10 @@ def execute(arguments):
                                                     arguments.T, arguments.K, arguments.gamma)
             is_func, iterations, beta = w_update,  arguments.K+ arguments.T, m
         else:
-            res, j, beta, accrate, up_rate = mcmcis(lambdaStar, L, X1, X2,
+            res, j, beta, accrate, up_rate = mcmcis(lambdaStar, L, X1, X2, arguments.w_func, arguments.gamma,
                                                     arguments.beta, arguments.adaptive, arguments.pi, arguments.frac,
                                                     arguments.K, arguments.J, arguments.T)
-            is_func, iterations = 'exp', j*(arguments.K+arguments.T)
+            is_func, iterations = arguments.w_func, j*(arguments.K+arguments.T)
         end_time = time()
         runtime = end_time - start_time
 
@@ -66,8 +66,8 @@ def main():
     parser.add_argument('--K', type=int, required=True, help='K parameter.')
     parser.add_argument('--J', type=int, required=False, default=1, help='J parameter.')
     parser.add_argument('--beta', type=float, required=True, help='Beta value.')
-    parser.add_argument('--gamma', type=float, required=False, default=None, help='t0 for gamma value.')
-    parser.add_argument('--w_func', type=str, required=False, help='IS func for mcmcis, weight update for SAMC')
+    parser.add_argument('--gamma', type=float, required=False, default=1, help='t0 for gamma value.')
+    parser.add_argument('--w_func', type=str, required=False, default='exp', help='IS func for mcmcis, weight update for SAMC')
     parser.add_argument('--adaptive', type=bool, required=False, default=False, help='Adaptive parameter.')
     parser.add_argument('--pi', type=float, required=False, default=None, help='tail')
     parser.add_argument('--frac', type=float, required=False,default=1, help='sampling fraction')
