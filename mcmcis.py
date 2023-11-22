@@ -72,9 +72,15 @@ def mcmcis(lambdaStar, L, X1, X2, is_func, t0,
                 theta11[j,k] = 1/gX
 
         #parameter beta update
-        if adaptive:
-            pi_hat = (theta11[j,:]!=0).sum()/ K
-            beta += gamma(j+1, t0)*(pi-pi_hat)
+        window = 1
+        if adaptive and j>=window-1:
+            window = 1
+            pi_hat = (theta11[j+1-window:j+1,:]!=0).sum()/ (K*window)
+            if beta > - gamma(j, t0)*(pi-pi_hat):
+                beta += gamma(j, t0)*(pi-pi_hat)
+            else:
+                beta=0
+
     
     theta0 = 0
     theta1 = 0
