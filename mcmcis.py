@@ -24,7 +24,7 @@ def mcmc_step():
 
 
 def mcmcis(lambdaStar, L, X1, X2, is_func, t0,
-           beta=0, adaptive=False, pi=0.5, frac = 1,
+           beta=0, adaptive=False, pi=0.5, window = 1 ,frac = 1,
            K=10**5, J=10**2, Ti=10**4):
     accept = 0
     X1new = X1.copy()
@@ -72,9 +72,14 @@ def mcmcis(lambdaStar, L, X1, X2, is_func, t0,
                 theta11[j,k] = 1/gX
 
         #parameter beta update
-        if adaptive:
-            pi_hat = (theta11[j,:]!=0).sum()/ K
-            beta += gamma(j+1, t0)*(pi-pi_hat)
+        if adaptive and j>=window-1:
+            window = 1
+            pi_hat = (theta11[j+1-window:j+1,:]!=0).sum()/ (K*window)
+            if beta > - gamma(j, t0)*(pi-pi_hat):
+                beta += gamma(j, t0)*(pi-pi_hat)
+            else:
+                beta=0
+
     
     theta0 = 0
     theta1 = 0
