@@ -19,6 +19,7 @@ def create_table():
             IS_func TEXT,
             accept_rate REAL,
             up_rate REAL,
+            pi_hat REAL,
             runtime INTEGER,
             iterations INTEGER,
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -32,22 +33,22 @@ def create_table():
 
 def insert_result(algo, example_id, true_val, result, 
                   beta, gamma, adaptive, pi, window, frac, IS_func,
-                  accept_rate, up_rate, runtime, iterations, 
+                  accept_rate, up_rate, pi_hat, runtime, iterations, 
                   T, K, J, notes=None):     
     with sqlite3.connect("data/experiment_results.db") as connection:
         cursor = connection.cursor()
         cursor.execute("""
         INSERT INTO results (algo, example_id, true_val, result, 
                   beta, gamma, adaptive, pi, window, fraction, IS_func,
-                  accept_rate, up_rate, runtime, iterations, 
+                  accept_rate, up_rate, pi_hat, runtime, iterations, 
                   T, K, J, notes)
         VALUES (?, ?, ?, ?,
                 ?, ?, ?, ?, ?, ?, ?,
-                ?, ?, ?, ?,
+                ?, ?, ?, ?, ?,
                 ?, ?, ?, ?)
         """,(algo, example_id, true_val, result, 
                   beta, gamma, adaptive, pi, window, frac, IS_func,
-                  accept_rate, up_rate, runtime, iterations, 
+                  accept_rate, up_rate, pi_hat, runtime, iterations, 
                   T, K, J, notes))
         connection.commit()
 

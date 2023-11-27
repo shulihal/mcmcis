@@ -22,7 +22,7 @@ def execute(arg):
 
     results = pd.DataFrame(columns=['algo', 'example_id', 'true_val', 'result',
                                     'beta', 'gamma', 'adaptive', 'pi', 'window', 'fraction', 'IS_func',
-                                    'accept_rate', 'up_rate', 'runtime', 'iterations',
+                                    'accept_rate', 'up_rate', 'pi_hat', 'runtime', 'iterations',
                                     'T', 'K', 'J', 'notes'])
 
     for _ in range(arg.n_runs // arg.num_processes):
@@ -36,9 +36,9 @@ def execute(arg):
             res, j, accrate, up_rate = samc(lambdaStar, L, X1, X2,
                                                     m, w_update,
                                                     arg.T, arg.K, arg.gamma)
-            is_func, iterations, beta = w_update,  arg.K+ arg.T, m
+            is_func, iterations, beta, pi_hat = w_update,  arg.K+ arg.T, m, up_rate
         else:
-            res, j, beta, accrate, up_rate = mcmcis(lambdaStar, L, X1, X2, arg.w_func, arg.gamma,
+            res, j, beta, accrate, up_rate, pi_hat = mcmcis(lambdaStar, L, X1, X2, arg.w_func, arg.gamma,
                                                     arg.beta, arg.adaptive, arg.pi, arg.window, arg.frac,
                                                     arg.K, arg.J, arg.T)
             is_func, iterations = arg.w_func, j*(arg.K+arg.T)
@@ -47,12 +47,12 @@ def execute(arg):
 
         store_results.insert_result(arg.algo, arg.exm_id, true_val, res,
                                     beta, arg.gamma, arg.adaptive, arg.pi, arg.window, arg.frac, is_func, 
-                                    accrate, up_rate, runtime, iterations,
+                                    accrate, up_rate, pi_hat, runtime, iterations,
                                     arg.T, arg.K, arg.J, notes=arg.notes)
 
         results.loc[results.shape[0]] = [arg.algo, arg.exm_id, true_val, res,
                                          beta, arg.gamma, arg.adaptive, arg.pi, arg.window, arg.frac, is_func,
-                                         accrate, up_rate, runtime, iterations,
+                                         accrate, up_rate, pi_hat, runtime, iterations,
                                          arg.T, arg.K, arg.J, arg.notes]
 
     return results

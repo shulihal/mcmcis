@@ -90,4 +90,5 @@ def mcmcis(lambdaStar, L, X1, X2, is_func, t0,
     iter = (j+1)*(K+Ti)
     accept_rate = accept / iter
     up_rate = (theta11>0).sum()/ (K*J)
-    return res, j+1, beta, accept_rate, up_rate
+    pi_hat = (theta11[-1,:]!=0).sum()/K
+    return res, j+1, beta, accept_rate, up_rate, pi_hat
