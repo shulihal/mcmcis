@@ -32,7 +32,7 @@ def execute(arg):
                 w_update = arg.w_func
             else:
                 w_update = 'base'
-            m = int(arg.beta)
+            m, pi = int(arg.beta), 1/arg.beta
             res, j, accrate, up_rate = samc(lambdaStar, L, X1, X2,
                                                     m, w_update,
                                                     arg.T, arg.K, arg.gamma)
@@ -41,17 +41,17 @@ def execute(arg):
             res, j, beta, accrate, up_rate, pi_hat = mcmcis(lambdaStar, L, X1, X2, arg.w_func, arg.gamma,
                                                     arg.beta, arg.adaptive, arg.pi, arg.window, arg.frac,
                                                     arg.K, arg.J, arg.T)
-            is_func, iterations = arg.w_func, j*(arg.K+arg.T)
+            is_func, iterations, pi = arg.w_func, j*(arg.K+arg.T), arg.pi
         end_time = time()
         runtime = end_time - start_time
 
         store_results.insert_result(arg.algo, arg.exm_id, true_val, res,
-                                    beta, arg.gamma, arg.adaptive, arg.pi, arg.window, arg.frac, is_func, 
+                                    beta, arg.gamma, arg.adaptive, pi, arg.window, arg.frac, is_func, 
                                     accrate, up_rate, pi_hat, runtime, iterations,
                                     arg.T, arg.K, arg.J, notes=arg.notes)
 
         results.loc[results.shape[0]] = [arg.algo, arg.exm_id, true_val, res,
-                                         beta, arg.gamma, arg.adaptive, arg.pi, arg.window, arg.frac, is_func,
+                                         beta, arg.gamma, arg.adaptive, pi, arg.window, arg.frac, is_func,
                                          accrate, up_rate, pi_hat, runtime, iterations,
                                          arg.T, arg.K, arg.J, arg.notes]
 
