@@ -16,6 +16,8 @@ def g_func(xzero, beta, x, is_func): # trial function
             return (x / xzero) ** beta
         elif is_func=='sigmoid':
             return 2 / (1 + np.exp(-beta * (x - xzero)))
+        elif is_func=='poly':
+            return beta ** (x-xzero)
         else:
             return 1.0
 
@@ -73,8 +75,12 @@ def mcmcis(lambdaStar, L, X1, X2, is_func, t0,
 
         #parameter beta update
         if adaptive and j>=window-1:
+            # \beta=log(-\pi K+\sum_{i=1}^{K}I\{x_{i+1}\ge x^{*}|x_{i}\}+I\{x_{i+1}<x^{*}|x_{i}\ge x^{*}\})/\sum_{i+1\in\{x_{i+1}<x^{*}|x_{i}\ge x^{*}\}}x_{i+1}-x^{*}
+
+            # beta=np.log(-pi*K+(x_i==-1).sum())/(x_i[x_i>0].sum())
+
             pi_hat = (theta11[j+1-window:j+1,:]!=0).sum()/ (K*window)
-            beta += gamma(j, t0)*np.log((1-pi_hat)/(1-pi))
+            # beta += gamma(j, t0)*np.log((1-pi_hat)/(1-pi))
             if beta<0:
                 beta=0
 

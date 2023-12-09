@@ -69,7 +69,7 @@ def main():
     parser.add_argument('--gamma', type=float, required=False, default=1, help='t0 for gamma value.')
     parser.add_argument('--w_func', type=str, required=False, default='exp', help='IS func for mcmcis, weight update for SAMC')
     parser.add_argument('--adaptive', type=bool, required=False, default=False, help='Adaptive parameter.')
-    parser.add_argument('--pi', type=float, required=False, default=None, help='tail')
+    parser.add_argument('--pi', type=float, required=False, default=0.01, help='tail')
     parser.add_argument('--window', type=int, required=False, default=1, help='window for beta update')
     parser.add_argument('--frac', type=float, required=False,default=1, help='sampling fraction')
     parser.add_argument('--n_runs', type=int, required=True, help='Number of runs.')
