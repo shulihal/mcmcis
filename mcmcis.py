@@ -52,17 +52,11 @@ def mcmcis(lambdaStar, L, X1, X2, is_func, t0,
                 gX = gY
                 accept += 1
 
-        x_i = np.zeros(K)
         for k in tqdm(range(K)):
             Y1, Y2, d = mh.propose(X1new, X2new, L)
             sum_diff_y = sum_diff_x + 2*d
             lambdaY = abs(sum_diff_y)
             gY = g_func(xzero= lambdaStar, beta =beta, x=lambdaY, is_func=is_func)
-
-            if lambdaY >= lambdaStar:
-                x_i[k] = 1
-            elif lambdaX >= lambdaStar:
-                x_i[k] = lambdaY - lambdaStar
             
             p = gY/gX
             q = np.random.rand()
@@ -81,12 +75,8 @@ def mcmcis(lambdaStar, L, X1, X2, is_func, t0,
 
         #parameter beta update
         if adaptive and j>=window-1:
-            # \beta=log(-\pi K+\sum_{i=1}^{K}I\{x_{i+1}\ge x^{*}|x_{i}\}+I\{x_{i+1}<x^{*}|x_{i}\ge x^{*}\})/\sum_{i+1\in\{x_{i+1}<x^{*}|x_{i}\ge x^{*}\}}x_{i+1}-x^{*}
-
-            # beta=np.log(-pi*K+(x_i!=0).sum())/np.log(np.exp(x_i[x_i<0]).sum())
-
             pi_hat = (theta11[j+1-window:j+1,:]!=0).sum()/ (K*window)
-            # beta += gamma(j, t0)*np.log((1-pi_hat)/(1-pi))
+            beta += gamma(j, t0)*np.log((1-pi_hat)/(1-pi))
             if beta<0:
                 beta=0
 
