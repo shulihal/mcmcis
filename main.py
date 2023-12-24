@@ -39,7 +39,7 @@ def execute(arg):
             is_func, iterations, beta, pi_hat = w_update,  arg.K+ arg.T, m, up_rate
         else:
             res, j, beta, accrate, up_rate, pi_hat = mcmcis(lambdaStar, L, X1, X2, arg.w_func, arg.gamma,
-                                                    arg.beta, arg.adaptive, arg.pi, arg.window, arg.frac,
+                                                    arg.beta, arg.adaptive, arg.pi, arg.frac,
                                                     arg.K, arg.J, arg.T)
             is_func, iterations, pi = arg.w_func, j*(arg.K+arg.T), arg.pi
         end_time = time()
