@@ -31,7 +31,7 @@ def random_sampling_lambda(x1, x2, M=10**5):
     X12 = np.concatenate([x1, x2])
     sum_total = X12.sum()
     lam_sum = 0
-    for k in range(M):
+    for _ in range(M):
         indices = np.random.choice(200, 100, replace=False)
         y1 = X12[indices].sum()
         y2 = sum_total - y1
@@ -40,40 +40,58 @@ def random_sampling_lambda(x1, x2, M=10**5):
     return rho
 
 
-def integrand_norm(x, sigma):
-    return np.exp(- (sigma**2 * x**2) / np.pi)
+def h_func(beta, lam_star, rho, pi_tilda, is_func):
+    def integrand_f(x):
+        return np.exp(- (rho**2 * x**2) / np.pi)
+    
+    def integrand_joint(x):
+        if is_func=='exp':
+            return np.exp(beta * x- (rho**2 * x**2) / np.pi)
+        elif is_func=='poly':
+            return (beta**(x - lam_star)) * np.exp(- (rho**2 * x**2) / np.pi)
+    
+    integral_f, _ = quad(integrand_f, lam_star, np.inf)
+    integral_fg, _ = quad(integrand_joint, 0, lam_star)
 
-def compute_integral_norm(x_star, sigma):
-    integral, _ = quad(integrand_norm, x_star, np.inf, args=(sigma,))
-    return (2 * sigma * integral) / np.pi
+    if is_func =='exp':
+        integral_fg =  (2 * rho * np.exp(- beta * lam_star) * integral_fg) / np.pi 
+        integral_f = (2 * rho * integral_f) / np.pi
 
-def integrand_joint(x, beta, sigma):
-    return np.exp(beta * x- (sigma**2 * x**2) / np.pi)
-
-def equation(beta, x_star, sigma, pi_tilda):
-    integral, _ = quad(integrand_joint, 0, x_star, args=(beta, sigma))
-    with_gx =  (2 * sigma * np.exp(- beta * x_star) * integral) / np.pi 
-    fx_int = compute_integral_norm(x_star, sigma)
-    return fx_int / (fx_int + with_gx) - pi_tilda
+    return integral_f / (integral_f + integral_fg) - pi_tilda
 
 
-def dh(sigma, x_star, beta):
-    def integrand1(x):
-        return np.exp(beta * x- (sigma**2 * x**2) / np.pi)
+def dh_calc(rho, lam_star, beta, is_func):
+    def integrand_f(x):
+        return np.exp(- (rho**2 * x**2) / np.pi)
+    
+    integral_f, _ = quad(integrand_f, lam_star, np.inf)
+    
+    def integrand_joint(x):
+        return np.exp(beta * x- (rho**2 * x**2) / np.pi)
 
-    def integrand2(x):
-        return x * np.exp(beta * x- (sigma**2 * x**2) / np.pi)
+    def integrand_fgx(x):
+        return x * np.exp(beta * x- (rho**2 * x**2) / np.pi)
 
-    def integrand3(x):
-        return np.exp(- (sigma**2 * x**2) / np.pi)
+    if is_func=='exp':
+        integral_joint, _ = quad(integrand_joint, 0, lam_star)
+        integral_fgx, _ = quad(integrand_fgx, 0, lam_star)
 
-    integral1, _ = quad(integrand1, 0, x_star)
-    integral2, _ = quad(integrand2, 0, x_star)
-    integral3, _ = quad(integrand3, x_star, np.inf)
+        numerator = (lam_star * integral_joint - integral_fgx) * np.exp(beta * lam_star) * integral_f
+        denominator = (np.exp(beta * lam_star) * integral_f + integral_joint)**2
+    
+    elif is_func=='poly':
+        def integrand2(x):
+            return beta**(x - lam_star - 1) * (x - lam_star) * np.exp(- (rho**2 * x**2) / np.pi)
 
-    numerator = (x_star * integral1 - integral2) * np.exp(beta * x_star) * integral3
-    denominator = (np.exp(beta * x_star) * integral3 + integral1)**2
+        def integrand3(x):
+            return beta**(x - lam_star) * np.exp(- (rho**2 * x**2) / np.pi)
 
+        integral2, _ = quad(integrand2, 0, lam_star)
+        integral3, _ = quad(integrand3, 0, lam_star)
+
+        numerator = - (integral_f * integral2)
+        denominator = (integral_f + integral3)**2
+    
     return numerator / denominator
 
 
@@ -81,7 +99,7 @@ def mcmcis(lambdaStar, L, X1, X2, is_func, t0,
            beta=0, adaptive=False, pi=0.01, frac = 1,
            K=10**5, J=10**2, Ti=10**4):
     rho = random_sampling_lambda(X1, X2)
-    beta_solution = fsolve(equation, beta, args=(lambdaStar, rho, pi))
+    beta_solution = fsolve(h_func, beta, args=(lambdaStar, rho, pi, is_func))
     beta =  beta_solution[0]
 
     accept = 0
@@ -92,6 +110,7 @@ def mcmcis(lambdaStar, L, X1, X2, is_func, t0,
     gX = g_func(xzero= lambdaStar, beta =beta, x=lambdaX, is_func=is_func)
     theta10 = np.zeros(shape=[J,K])
     theta11 = np.zeros(shape=[J,K])
+
     for j in tqdm(range(J)):
         for _ in range(Ti): #burnin
             Y1, Y2, d = mh.propose(X1new, X2new, L)
@@ -132,12 +151,11 @@ def mcmcis(lambdaStar, L, X1, X2, is_func, t0,
         #parameter beta update
         if adaptive:
             pi_hat = (theta11[j,:]!=0).sum()/ K
-            d_h = dh(rho, lambdaStar, beta)
-            beta -= (pi_hat - pi) / d_h
+            dh = dh_calc(rho, lambdaStar, beta, is_func)
+            beta -= (pi_hat - pi) / dh
 
             if beta<0:
                 beta=0
-
     
     theta0 = 0
     theta1 = 0
@@ -145,9 +163,11 @@ def mcmcis(lambdaStar, L, X1, X2, is_func, t0,
         sampled_indices = np.random.choice(K, size=int(K*frac), replace=False)
         theta0  += theta10[row,sampled_indices].sum()
         theta1  += theta11[row,sampled_indices].sum()
+
     res = (theta1/theta0)
     iter = (j+1)*(K+Ti)
     accept_rate = accept / iter
     up_rate = (theta11>0).sum()/ (K*J)
     pi_hat = (theta11[-1,:]!=0).sum()/K
+
     return res, j+1, beta, accept_rate, up_rate, pi_hat
