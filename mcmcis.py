@@ -126,7 +126,8 @@ def mcmcis(lambdaStar, L, X1, X2, is_func, t0,
                 sum_diff_x = sum_diff_y.copy()
                 gX = gY
                 accept += 1
-
+        lambdaX = abs(sum_diff_x)
+        
         for k in tqdm(range(K)):
             Y1, Y2, d = mh.propose(X1new, X2new, L)
             sum_diff_y = sum_diff_x + 2*d
