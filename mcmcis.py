@@ -1,7 +1,7 @@
 import numpy as np
 from tqdm.auto import tqdm
-from scipy.integrate import quad
 from scipy.optimize import fsolve
+from scipy.stats import norm
 
 import mh
 
@@ -18,8 +18,6 @@ def g_func(xzero, beta, x, is_func): # trial function
             return (x / xzero) ** beta
         elif is_func=='sigmoid':
             return 2 / (1 + np.exp(-beta * (x - xzero)))
-        elif is_func=='poly':
-            return beta ** (x-xzero)
         else:
             return 1.0
 
@@ -30,76 +28,45 @@ def mcmc_step():
 def random_sampling_lambda(x1, x2, M=10**5):
     X12 = np.concatenate([x1, x2])
     sum_total = X12.sum()
-    lam_sum = 0
-    for _ in range(M):
+    xs = np.zeros(M)
+    for m in range(M):
         indices = np.random.choice(200, 100, replace=False)
         y1 = X12[indices].sum()
-        y2 = sum_total - y1
-        lam_sum += abs(y1 - y2)
-    rho = M / lam_sum
-    return rho
+        xs[m] = 2*y1 - sum_total
+
+    return xs.std(ddof=1)
 
 
-def h_func(beta, lam_star, rho, pi_tilda, is_func):
-    def integrand_f(x):
-        return np.exp(- (rho**2 * x**2) / np.pi)
-    
-    def integrand_joint(x):
-        if is_func=='exp':
-            return np.exp(beta * x- (rho**2 * x**2) / np.pi)
-        elif is_func=='poly':
-            return (beta**(x - lam_star)) * np.exp(- (rho**2 * x**2) / np.pi)
-    
-    integral_f, _ = quad(integrand_f, lam_star, np.inf)
-    integral_fg, _ = quad(integrand_joint, 0, lam_star)
+def h_func(beta, x_star, sigma, pi_tilda):
+    tail = 1 - norm.cdf(x_star, 0, sigma)
 
-    if is_func =='exp':
-        integral_fg =  (2 * rho * np.exp(- beta * lam_star) * integral_fg) / np.pi 
-        integral_f = (2 * rho * integral_f) / np.pi
+    phi1 = norm.cdf(x_star, beta * sigma**2, sigma)
+    phi2 = norm.cdf(0, beta * sigma, 1)
+    exponential = np.exp(beta * (0.5*beta*sigma**2 - x_star))
+    body =  (phi1-phi2) * exponential
 
-    return integral_f / (integral_f + integral_fg) - pi_tilda
+    return tail / (tail + body) - pi_tilda
 
 
-def dh_calc(rho, lam_star, beta, is_func):
-    def integrand_f(x):
-        return np.exp(- (rho**2 * x**2) / np.pi)
-    
-    integral_f, _ = quad(integrand_f, lam_star, np.inf)
-    
-    def integrand_joint(x):
-        return np.exp(beta * x- (rho**2 * x**2) / np.pi)
+def dh_func(beta, x_star, sigma):
+    tail = 1 - norm.cdf(x_star, 0, sigma)
 
-    def integrand_fgx(x):
-        return x * np.exp(beta * x- (rho**2 * x**2) / np.pi)
+    phi1 = norm.cdf(x_star, beta * sigma**2, sigma)
+    phi2 = norm.cdf(0, beta * sigma, 1)
+    exponential = np.exp(beta * (0.5*beta*sigma**2 - x_star))
+    B =  (phi1-phi2) * exponential
 
-    if is_func=='exp':
-        integral_joint, _ = quad(integrand_joint, 0, lam_star)
-        integral_fgx, _ = quad(integrand_fgx, 0, lam_star)
+    exponential2 = np.exp(-0.5 * sigma**2 * beta**2) - np.exp(-0.5*((x_star - sigma**2 * beta)**2)/sigma**2)
+    A = sigma**2 * beta * (phi1 - phi2) + exponential2 * sigma / np.sqrt(2* np.pi)
+    dB = exponential * A - x_star * B
 
-        numerator = (lam_star * integral_joint - integral_fgx) * np.exp(beta * lam_star) * integral_f
-        denominator = (np.exp(beta * lam_star) * integral_f + integral_joint)**2
-    
-    elif is_func=='poly':
-        def integrand2(x):
-            return beta**(x - lam_star - 1) * (x - lam_star) * np.exp(- (rho**2 * x**2) / np.pi)
-
-        def integrand3(x):
-            return beta**(x - lam_star) * np.exp(- (rho**2 * x**2) / np.pi)
-
-        integral2, _ = quad(integrand2, 0, lam_star)
-        integral3, _ = quad(integrand3, 0, lam_star)
-
-        numerator = - (integral_f * integral2)
-        denominator = (integral_f + integral3)**2
-    
-    return numerator / denominator
-
+    return - (dB * tail) / (tail + B)**2
 
 def mcmcis(lambdaStar, L, X1, X2, is_func, t0,
            beta=0, adaptive=False, pi=0.01, frac = 1,
            K=10**5, J=10**2, Ti=10**4):
-    rho = random_sampling_lambda(X1, X2)
-    beta_solution = fsolve(h_func, beta, args=(lambdaStar, rho, pi, is_func))
+    sigma = random_sampling_lambda(X1, X2)
+    beta_solution = fsolve(h_func, beta, args=(lambdaStar, sigma, pi))
     beta =  beta_solution[0]
 
     accept = 0
@@ -150,9 +117,9 @@ def mcmcis(lambdaStar, L, X1, X2, is_func, t0,
                 theta11[j,k] = 1/gX
 
         #parameter beta update
-        if adaptive:
-            pi_hat = (theta11[j,:]!=0).sum()/ K
-            dh = dh_calc(rho, lambdaStar, beta, is_func)
+        if adaptive and J>1:
+            pi_hat = (theta11[j,:]>0).sum()/ K
+            dh = dh_func(beta, lambdaStar, sigma)
             beta -= (pi_hat - pi) / dh
 
             if beta<0:
@@ -169,6 +136,6 @@ def mcmcis(lambdaStar, L, X1, X2, is_func, t0,
     iter = (j+1)*(K+Ti)
     accept_rate = accept / iter
     up_rate = (theta11>0).sum()/ (K*J)
-    pi_hat = (theta11[-1,:]!=0).sum()/K
+    pi_hat = (theta11[-1,:]>0).sum()/K
 
     return res, j+1, beta, accept_rate, up_rate, pi_hat
