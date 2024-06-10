@@ -2,15 +2,16 @@
 ### p-value estimation for permutation tests
 
 An efficient algorithm for estimating tail in unknown distribution, using Markov Chain Monte Carlo and Importance Sampling techniques.
-Compared to the SAMC algorithm and different IS functions.
+Compared to the SAMC algorithm.
 
 To run the algorithm use terminal:
-python3 main.py --algo['samc', 'mcmcis'] --exm_id [0,1,2,3] --T 1000000 --K 10000000 --beta 0.1 --n_runs 7 --notes '' &
+python3 main.py --algo['samc', 'mcmcis'] --exm_id [0,1,2,3] --T 1000000 --K 10000000 --n_runs 7 --pi 0.01 --notes '' &
 
 examples are in 'data.txt'
 results are in both: results.csv 
 and in experiment_results.db in 'results' table.
 
+<!-- 
 ## General Idea
 
 Our objective is to determine the size of the tail of a given distribution, the probability of sampling from that region. Ideally, we could achieve this by randomly sampling from the space and then weighting the samples from the tail over the rest of the space (i.e., the resampling method). However, for tails that are extremely small, such as those in the size of $10^{-7}$, we would need an enormous number of samples to attain statistical confidence - on the order of $10^{9}$ iterations.
@@ -24,4 +25,4 @@ In the final step, we calculate the p-value by summing the IS weights obtained f
 ## The Algorithm
 
 Let $x$ be a sample in the sample space $X$, where $g_{\beta}(x)$ is the IS trial function with scaling parameter $\beta$, and $\psi(x)$ is the sample distribution. At each iteration of the Metropolis-Hastings MCMC, a new step is proposed, and we use the IS weight, $\frac{\psi(x)}{g(x)}$, for the probabilities ratio to decide whether to accept the new step. The algorithm consists of three parts: (1) burn-in, where MCMC is run for a sufficient number of iterations to eliminate dependence on the starting point; (2) estimation of the target parameter (e.g., p-value) using the sum of weights; and (3) update trial function parameter to balance the number of samples from different regions of the sample space. The algorithm is repeated until convergence or maximum number of iterations is achieved.
-
+ -->
