@@ -38,20 +38,20 @@ def execute(arg):
                                                     arg.T, arg.K, arg.gamma)
             is_func, iterations, beta, pi_hat = w_update,  arg.K+ arg.T, m, up_rate
         else:
-            res, j, beta, accrate, up_rate, pi_hat = mcmcis(lambdaStar, L, X1, X2, arg.w_func, arg.gamma,
-                                                    arg.beta, arg.adaptive, arg.pi, arg.frac,
+            res, j, beta, accrate, up_rate, pi_hat = mcmcis(lambdaStar, L, X1, X2,
+                                                    arg.beta, arg.adaptive, arg.pi,
                                                     arg.K, arg.J, arg.T)
-            is_func, iterations, pi = arg.w_func, j*(arg.K+arg.T), arg.pi
+            is_func, iterations, pi = 'exp', j*(arg.K+arg.T), arg.pi
         end_time = time()
         runtime = end_time - start_time
 
         store_results.insert_result(arg.algo, arg.exm_id, true_val, res,
-                                    beta, arg.gamma, arg.adaptive, pi, arg.window, arg.frac, is_func, 
+                                    beta, arg.gamma, arg.adaptive, pi, 1, 1, is_func, 
                                     accrate, up_rate, pi_hat, runtime, iterations,
                                     arg.T, arg.K, arg.J, notes=arg.notes)
 
         results.loc[results.shape[0]] = [arg.algo, arg.exm_id, true_val, res,
-                                         beta, arg.gamma, arg.adaptive, pi, arg.window, arg.frac, is_func,
+                                         beta, arg.gamma, arg.adaptive, pi, 1, 1, is_func,
                                          accrate, up_rate, pi_hat, runtime, iterations,
                                          arg.T, arg.K, arg.J, arg.notes]
 
@@ -67,11 +67,11 @@ def main():
     parser.add_argument('--J', type=int, required=False, default=1, help='J parameter.')
     parser.add_argument('--beta', type=float, required=True, help='Beta value.')
     parser.add_argument('--gamma', type=float, required=False, default=1, help='t0 for gamma value.')
-    parser.add_argument('--w_func', type=str, required=False, default='exp', help='IS func for mcmcis, weight update for SAMC')
-    parser.add_argument('--adaptive', type=bool, required=False, default=False, help='Adaptive parameter.')
+    # parser.add_argument('--w_func', type=str, required=False, default='exp', help='IS func for mcmcis, weight update for SAMC')
+    parser.add_argument('--adaptive', type=bool, required=False, default=True, help='Adaptive parameter.')
     parser.add_argument('--pi', type=float, required=False, default=0.01, help='tail')
-    parser.add_argument('--window', type=int, required=False, default=1, help='window for beta update')
-    parser.add_argument('--frac', type=float, required=False,default=1, help='sampling fraction')
+    # parser.add_argument('--window', type=int, required=False, default=1, help='window for beta update')
+    # parser.add_argument('--frac', type=float, required=False,default=1, help='sampling fraction')
     parser.add_argument('--n_runs', type=int, required=True, help='Number of runs.')
     parser.add_argument('--num_processes', type=int,default=multiprocessing.cpu_count(), help='Number of processes to run in parallel.')
     parser.add_argument('--notes', nargs='?', required=False, default=None, help='Additional notes.')

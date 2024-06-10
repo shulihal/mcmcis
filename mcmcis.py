@@ -5,21 +5,11 @@ from scipy.stats import norm
 
 import mh
 
-def gamma(t, t0=1):
-    return t0 / max(t0, t)
+# def gamma(t, t0=1):
+#     return t0 / max(t0, t)
 
-def g_func(xzero, beta, x, is_func): # trial function
-    if x >= xzero:
-        return 1.0
-    else:
-        if is_func=='exp':
-            return np.exp(beta * (x - xzero))
-        elif is_func=='power':
-            return (x / xzero) ** beta
-        elif is_func=='sigmoid':
-            return 2 / (1 + np.exp(-beta * (x - xzero)))
-        else:
-            return 1.0
+def g_func(x_star, beta, x): # trial function
+    return np.exp(beta * (x - x_star) * (x <= x_star))
 
 
 def random_sampling_lambda(x1, x2, M=10**5):
@@ -34,7 +24,7 @@ def random_sampling_lambda(x1, x2, M=10**5):
     return xs.std(ddof=1)
 
 
-def h_func(beta, x_star, sigma, pi_tilda):
+def h_func(beta, x_star, sigma, pi_tilde):
     tail = 1 - norm.cdf(x_star, 0, sigma)
 
     phi1 = norm.cdf(x_star, beta * sigma**2, sigma)
@@ -42,7 +32,7 @@ def h_func(beta, x_star, sigma, pi_tilda):
     exponential = np.exp(beta * (0.5*beta*sigma**2 - x_star))
     body =  (phi1-phi2) * exponential
 
-    return tail / (tail + body) - pi_tilda
+    return tail / (tail + body) - pi_tilde
 
 
 def dh_func(beta, x_star, sigma):
@@ -60,8 +50,8 @@ def dh_func(beta, x_star, sigma):
     return - (dB * tail) / (tail + B)**2
 
 
-def mcmcis(lambdaStar, L, X1, X2, is_func, t0,
-           beta=0, adaptive=False, pi=0.01, frac = 1,
+def mcmcis(lambdaStar, L, X1, X2,
+           beta=0, adaptive=False, pi=0.01,
            K=10**5, J=10**2, Ti=10**4):
     sigma = random_sampling_lambda(X1, X2)
     beta_solution = fsolve(h_func, beta, args=(lambdaStar, sigma, pi))
@@ -72,7 +62,7 @@ def mcmcis(lambdaStar, L, X1, X2, is_func, t0,
     X2new = X2.copy()
     sum_diff_x = mh.sum_diff(X1new, X2new)
     lambdaX = abs(sum_diff_x)
-    gX = g_func(xzero= lambdaStar, beta =beta, x=lambdaX, is_func=is_func)
+    gX = g_func(x_star= lambdaStar, beta =beta, x=lambdaX)
     theta10 = np.zeros(shape=[J,K])
     theta11 = np.zeros(shape=[J,K])
 
@@ -81,7 +71,7 @@ def mcmcis(lambdaStar, L, X1, X2, is_func, t0,
             Y1, Y2, d = mh.propose(X1new, X2new, L)
             sum_diff_y = sum_diff_x + 2*d
             lambdaY = abs(sum_diff_y)
-            gY = g_func(xzero= lambdaStar, beta =beta, x=lambdaY, is_func=is_func)
+            gY = g_func(x_star= lambdaStar, beta =beta, x=lambdaY)
 
             p = gY/gX
             q = np.random.rand()
@@ -97,7 +87,7 @@ def mcmcis(lambdaStar, L, X1, X2, is_func, t0,
             Y1, Y2, d = mh.propose(X1new, X2new, L)
             sum_diff_y = sum_diff_x + 2*d
             lambdaY = abs(sum_diff_y)
-            gY = g_func(xzero= lambdaStar, beta =beta, x=lambdaY, is_func=is_func)
+            gY = g_func(x_star= lambdaStar, beta =beta, x=lambdaY)
             
             p = gY/gX
             q = np.random.rand()

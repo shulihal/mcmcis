@@ -5,7 +5,7 @@ An efficient algorithm for estimating tail in unknown distribution, using Markov
 Compared to the SAMC algorithm.
 
 To run the algorithm use terminal:
-python3 main.py --algo['samc', 'mcmcis'] --exm_id [0,1,2,3] --T 1000000 --K 10000000 --n_runs 7 --pi 0.01 --notes '' &
+python3 main.py --algo['samc', 'mcmcis'] --exm_id [0,1,2,3] --T 1000000 --K 10000000 --n_runs 7 --beta 0.1 --pi 0.01 --notes '' &
 
 examples are in 'data.txt'
 results are in both: results.csv 
