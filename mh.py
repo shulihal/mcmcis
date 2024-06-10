@@ -21,7 +21,7 @@ def perm_exact_pval_diff(X,Y):
 
 
 ## test statistic (lambda).
-def sum_diff(x, y): 
+def sum_diff(x, y):
     return y.sum() - x.sum()
 
 

@@ -21,9 +21,6 @@ def g_func(xzero, beta, x, is_func): # trial function
         else:
             return 1.0
 
-def mcmc_step():
-    return 1
-
 
 def random_sampling_lambda(x1, x2, M=10**5):
     X12 = np.concatenate([x1, x2])
@@ -61,6 +58,7 @@ def dh_func(beta, x_star, sigma):
     dB = exponential * A - x_star * B
 
     return - (dB * tail) / (tail + B)**2
+
 
 def mcmcis(lambdaStar, L, X1, X2, is_func, t0,
            beta=0, adaptive=False, pi=0.01, frac = 1,
@@ -125,12 +123,8 @@ def mcmcis(lambdaStar, L, X1, X2, is_func, t0,
             if beta<0:
                 beta=0
     
-    theta0 = 0
-    theta1 = 0
-    for row in range(J):
-        sampled_indices = np.random.choice(K, size=int(K*frac), replace=False)
-        theta0  += theta10[row,sampled_indices].sum()
-        theta1  += theta11[row,sampled_indices].sum()
+    theta0 = theta10.sum()
+    theta1 = theta11.sum()
 
     res = (theta1/theta0)
     iter = (j+1)*(K+Ti)
